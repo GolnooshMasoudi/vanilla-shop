@@ -5,6 +5,8 @@ const backDrop = document.querySelector(".backdrop");
 const closeModal = document.querySelector(".cart-item-confirm");
 
 const productsDOM = document.querySelector(".products-center");
+const cartTotal = document.querySelector(".cart-total");
+const cartItems = document.querySelector(".cart-items");
 
 let cart = [];
 class Products {
@@ -65,8 +67,21 @@ class UI {
         Storage.saveCart(cart);
         //update cart value
         //add to cart item
+        this.setCartValue(cart);
       });
     });
+  }
+  setCartValue(cart) {
+    //cart items
+    //cart total price
+    let tempCartItems = 0; //! current cart Items
+    const totalPrice = cart.reduce((acc, curr) => {
+      tempCartItems += curr.quantity;
+      return acc + curr.quantity * curr.price;
+    }, 0);
+    cartTotal.innerHTML = `totalPrice = ${totalPrice.toFixed(2)} $`;
+    cartItems.innerText = tempCartItems;
+    console.log(tempCartItems);
   }
 }
 
