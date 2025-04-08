@@ -32,10 +32,7 @@ class UI {
             <p class="product-price">$ ${item.price}</p>
             <p class="product-title">${item.title}</p>
           </div>
-          <button class="btn add-to-cart" data-id=${item.id}>
-            <i class="fas fa-shopping-cart"></i>
-            add to cart
-          </button>
+          <button class="btn add-to-cart" data-id=${item.id}>add to cart</button>
         </div>`;
       productsDOM.innerHTML = result;
     });
@@ -101,7 +98,7 @@ class UI {
               <h5>$ ${cartItem.price}</h5>
             </div>
             <div class="cart-item-conteoller">
-              <i class="fas fa-chevron-up" data-id=${cartItem.id} ></i>
+              <i class="fas fa-chevron-up" data-id=${cartItem.id}></i>
               <p>${cartItem.quantity}</p>
               <i class="fas fa-chevron-down" data-id=${cartItem.id}></i>
             </div>
@@ -119,6 +116,54 @@ class UI {
   cartLogic() {
     //clear cart
     clearCart.addEventListener("click", () => this.clearCart());
+    //cart functionality
+    cartContent.addEventListener("click", (event) => {
+      // console.log(event.target);
+      if (event.target.classList.contains("fa-chevron-up")) {
+        console.log("add");
+        console.log(event.target.dataset.id);
+        const addQuantity = event.target;
+        //get item from cart
+        const addedItem = cart.find(
+          (cItem) => cItem.id == addQuantity.dataset.id
+        );
+        addedItem.quantity++;
+        //update cart value
+        this.setCartValue(cart);
+        //save cart
+        Storage.saveCart(cart);
+        //update cart item in UI
+        addQuantity.nextElementSibling.innerText = addedItem.quantity;
+      } else if (event.target.classList.contains("fa-chevron-down")) {
+        // console.log("down");
+        const subQuantity = event.target;
+        //get item from cart
+        const substractedItem = cart.find(
+          (cItem) => cItem.id == subQuantity.dataset.id
+        );
+        if ((substractedItem.quantity = 1)) {
+          this.removeItem(substractedItem.id);
+          cartContent.removeChild(subQuantity.parentElement.parentElement);
+          return;
+        }
+        substractedItem.quantity--;
+        //update cart value
+        this.setCartValue(cart);
+        //save cart
+        Storage.saveCart(cart);
+        //update cart item in UI
+        subQuantity.previousElementSibling.innerText = substractedItem.quantity;
+      } else if (event.target.classList.contains("fa-trash-can")) {
+        // console.log("delete");
+        const removeItem = event.target;
+        const _removedItem = cart.find((c) => c.id == removeItem.dataset.id);
+        this.removeItem(_removedItem.id);
+        Storage.saveCart(cart);
+        cartContent.removeChild(removeItem.parentElement);
+        //remove from cartItem
+        //removem method
+      }
+    });
   }
   removeItem(id) {
     // console.log("removeItem triggered");
