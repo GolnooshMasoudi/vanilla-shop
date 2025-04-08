@@ -7,8 +7,12 @@ const closeModal = document.querySelector(".cart-item-confirm");
 const productsDOM = document.querySelector(".products-center");
 const cartTotal = document.querySelector(".cart-total");
 const cartItems = document.querySelector(".cart-items");
+const cartContent = document.querySelector(".cart-content");
+const clearCart = document.querySelector(".clear-cart");
 
 let cart = [];
+
+let buttonsDOM = [];
 class Products {
   // I could get it from api too!
   getProducts() {
@@ -38,16 +42,17 @@ class UI {
   }
 
   getAddTocartBtns() {
-    const addTocartBtns = document.querySelectorAll(".add-to-cart");
+    const addTocartBtns = [...document.querySelectorAll(".add-to-cart")];
+    buttonsDOM = addTocartBtns;
     // console.log(addTocartBtns);
-    const buttons = [...addTocartBtns];
     // console.log(buttons);
-    buttons.forEach((btn) => {
+    addTocartBtns.forEach((btn) => {
       const id = btn.dataset.id;
       console.log(id);
       //check if this product id is in the cart or not!
       const isInCart = cart.find((p) => {
         p.id === id;
+        parseInt(id);
       });
       if (isInCart) {
         btn.innerText = "In Cart";
@@ -59,15 +64,18 @@ class UI {
         event.target.disabled = true;
 
         //get product from product
-        const addedProduct = Storage.getProduct(id);
-        console.log(addedProduct);
+        const addedProduct = { ...Storage.getProduct(id), quantity: 1 };
+        // console.log(addedProduct);
+
         //add to cart
-        cart = [...cart, { ...addedProduct, quantity: 1 }];
+        cart = [...cart, addedProduct];
+
         //save cart to local storage
         Storage.saveCart(cart);
         //update cart value
         //add to cart item
         this.setCartValue(cart);
+        this.addCartItems(addedProduct);
       });
     });
   }
@@ -81,7 +89,65 @@ class UI {
     }, 0);
     cartTotal.innerHTML = `totalPrice = ${totalPrice.toFixed(2)} $`;
     cartItems.innerText = tempCartItems;
-    console.log(tempCartItems);
+    // console.log(tempCartItems);
+  }
+  addCartItems(cartItem) {
+    const div = document.createElement("div");
+    div.classList.add("cart-item");
+    div.innerHTML = `
+            <img class="cart-item-img" src=${cartItem.imageUrl} />
+            <div class="cart-item-desc">
+              <h4>${cartItem.title}</h4>
+              <h5>$ ${cartItem.price}</h5>
+            </div>
+            <div class="cart-item-conteoller">
+              <i class="fas fa-chevron-up" data-id=${cartItem.id} ></i>
+              <p>${cartItem.quantity}</p>
+              <i class="fas fa-chevron-down" data-id=${cartItem.id}></i>
+            </div>
+            <i class="fa-regular fa-trash-can" data-id=${cartItem.id}></i>`;
+    cartContent.appendChild(div);
+  }
+  setUpApp() {
+    //get cart from storage
+    cart = Storage.getCart() || [];
+    //add cart Item and show in the modal
+    cart.forEach((cartItem) => this.addCartItems(cartItem));
+    //set values :price + items
+    this.setCartValue(cart);
+  }
+  cartLogic() {
+    //clear cart
+    clearCart.addEventListener("click", () => this.clearCart());
+  }
+  removeItem(id) {
+    // console.log("removeItem triggered");
+    // console.log(id);
+    //! update cart
+    cart = cart.filter((cItem) => cItem.id !== id);
+    //update total price and cart items
+    this.setCartValue(cart);
+    //update storage
+    Storage.saveCart(cart);
+    //get add to cart btn
+    this.getSingleButton(id);
+  }
+  clearCart() {
+    //remove
+
+    cart.forEach((cItem) => this.removeItem(cItem.id));
+    //remove cart content children
+    while (cartContent.children.length) {
+      cartContent.removeChild(cartContent.children[0]);
+    }
+    closeModalFunction();
+  }
+  getSingleButton(id) {
+    const button = buttonsDOM.find(
+      (btn) => parseInt(btn.dataset.id) === parseInt(id)
+    );
+    button.innerText = "add to cart";
+    button.disabled = false;
   }
 }
 
@@ -96,6 +162,9 @@ class Storage {
   static saveCart(cart) {
     localStorage.setItem("cart", JSON.stringify(cart));
   }
+  static getCart() {
+    return JSON.parse(localStorage.getItem("cart"));
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -103,9 +172,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const productsData = products.getProducts();
   // console.log(productsData);
   const ui = new UI();
+  //set up: go to local storage and get carts and set up app
+  ui.setUpApp();
+
   ui.displayProducts(productsData);
   Storage.saveProducts(productsData);
   ui.getAddTocartBtns();
+  ui.cartLogic();
 });
 
 //cart items modal
